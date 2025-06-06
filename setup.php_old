@@ -1,0 +1,181 @@
+<?php
+  if (!file_exists("config.php"))
+  {
+    print "config.php not found, please copy config.php.dist to config.php to continue";
+
+    exit();
+  }
+
+  require("includes/common.php");
+
+  mysqli_report(MYSQLI_REPORT_OFF);
+
+  if (isset($_GET["installDB"]))
+  {
+    $fp = fopen("setup.sql","r");
+
+    $data = "";
+
+    while(!feof($fp))
+    {
+      $line = trim(fgets($fp));
+
+      if (($line) && (substr($line,0,2) <> "--"))
+      {
+        $data .= $line;
+      }
+    }
+
+    fclose($fp);
+
+    if ($config_databaseTablePrefix)
+    {
+      $data = str_replace("CREATE TABLE ","CREATE TABLE ".$config_databaseTablePrefix,$data);
+    }
+
+    $queries = explode(";",$data);
+
+    foreach($queries as $sql)
+    {
+      if ($sql)
+      {
+        database_queryModify($sql,$insertId);
+      }
+    }
+
+    header("Location: setup.php");
+
+    exit();
+  }
+
+  if (isset($_GET["installIndex"]))
+  {
+    $sql = "CREATE FULLTEXT INDEX name_description ON `".$config_databaseTablePrefix."products` (name,description)";
+
+    database_queryModify($sql,$result);
+
+    header("Location: setup.php");
+
+    exit();
+  }
+
+  print "<html>";
+
+  print "<head><title>Price Tapestry Setup</title></head>";
+
+  print "<body>";
+
+  function testDatabaseConnection()
+  {
+    global $config_databaseServer;
+
+    global $config_databaseUsername;
+
+    global $config_databasePassword;
+
+    if (@mysqli_connect($config_databaseServer,$config_databaseUsername,$config_databasePassword))
+    {
+       return TRUE;
+    }
+    else
+    {
+       return FALSE;
+    }
+  }
+
+  function testDatabaseSelection()
+  {
+    global $config_databaseServer;
+
+    global $config_databaseUsername;
+
+    global $config_databasePassword;
+
+    global $config_databaseName;
+
+    if (@mysqli_connect($config_databaseServer,$config_databaseUsername,$config_databasePassword,$config_databaseName))
+    {
+       return TRUE;
+    }
+    else
+    {
+       return FALSE;
+    }
+  }
+
+  function testDatabaseTables()
+  {
+    global $config_databaseServer;
+
+    global $config_databaseUsername;
+
+    global $config_databasePassword;
+
+    global $config_databaseName;
+
+    global $config_databaseTablePrefix;
+
+    if ($link = @mysqli_connect($config_databaseServer,$config_databaseUsername,$config_databasePassword,$config_databaseName))
+    {
+      $table = (file_exists("vouchers.php")?"vouchers":"products");
+
+      if (mysqli_query($link,"SELECT count(*) AS num FROM `".$config_databaseTablePrefix.$table."`"))
+      {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
+  }
+
+  function test($description,$function,$help,$noPreFailHelp)
+  {
+    global $testsFailed;
+
+    print "<p>";
+
+    print $description;
+
+    $result = $function();
+
+    print ($result ? "PASS" : "FAIL <strong> ".$help.($testsFailed?"":$noPreFailHelp)."</strong>");
+
+    print "</p>";
+
+    return ($result ? 0 : 1);
+  }
+
+  $testsFailed = 0;
+
+  $testsFailed += test("Checking database connection...","testDatabaseConnection","check \$config_databaseUsername and \$config_databasePassword values","");
+
+  $testsFailed += test("Checking database selection...","testDatabaseSelection","","check \$config_databaseName value");
+
+  $testsFailed += test("Checking database tables...","testDatabaseTables","","<a href='?installDB=1'>click here to install tables</a>");
+
+  if (!$testsFailed)
+  {
+    if ($config_useRewrite && !file_exists(".htaccess"))
+    {
+      print "<p>WARNING: \$config_useRewrite is TRUE but .htaccess not found.</p>";
+    }
+
+    if ($config_searchDescription)
+    {
+       $sql = "SHOW INDEXES FROM `".$config_databaseTablePrefix."products` WHERE Key_name = 'name_description'";
+
+       if (!database_querySelect($sql,$rows))
+       {
+         print "<p>WARNING: \$config_searchDescription is TRUE but name_description index not found.  <a href='?installIndex=1'>Click here to create index</a></p>";
+       }
+    }
+
+    print "<p>Setup Completed!</p>";
+
+    print "<p><a href='admin/'>Click here to continue...</a></p>";
+  }
+
+  print "</body>";
+
+  print "</html>";
+?>

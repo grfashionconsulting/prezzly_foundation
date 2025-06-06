@@ -1,0 +1,6 @@
+[29-May-2025 10:06:16 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')' at line 1 in /home/prezzly/public_html/includes/database.php:31
+Stack trace:
+#0 /home/prezzly/public_html/includes/database.php(31): mysqli_query()
+#1 /home/prezzly/public_html/search.php(494): database_querySelect()
+#2 {main}
+  thrown in /home/prezzly/public_html/includes/database.php on line 31

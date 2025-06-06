@@ -1,0 +1,23 @@
+Options -MultiViews
+
+RewriteEngine On
+
+RewriteBase /
+
+RewriteRule ^prodotto/(.*).html$ products.php?q=$1&rewrite=1&%{QUERY_STRING} [B,L]
+
+RewriteRule ^recensione/(.*).html$ reviews.php?q=$1&rewrite=1&%{QUERY_STRING} [B,L]
+
+RewriteRule ^negozio/$ merchants.php
+RewriteRule ^negozio/(.*)/$ search.php?q=merchant:$1:&rewrite=1&%{QUERY_STRING} [B,L]
+RewriteRule ^negozio/(.*)/(.*).html$ search.php?q=merchant:$1:&page=$2&rewrite=1&%{QUERY_STRING} [B,L]
+
+RewriteRule ^categoria/$ categories.php [L]
+RewriteRule ^categoria/(.*)/$ categories.php?path=$1  [L,B]
+RewriteRule ^categoria/(.*)/(.*).html$ search.php?q=category:$1:&page=$2&rewrite=1&%{QUERY_STRING} [L,B]
+
+RewriteRule ^marchio/$ brands.php
+RewriteRule ^marchio/(.*)/$ search.php?q=brand:$1:&rewrite=1&%{QUERY_STRING} [B,L]
+RewriteRule ^marchio/(.*)/(.*).html$ search.php?q=brand:$1:&page=$2&rewrite=1&%{QUERY_STRING} [B,L]
+
+ErrorDocument 404 /404.php
